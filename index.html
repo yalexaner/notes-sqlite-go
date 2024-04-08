@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login</title>
+    <script src="https://unpkg.com/htmx.org@1.6.0"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="input-container">
+            <input type="text" name="username" placeholder="Username">
+            <input type="password" name="password" placeholder="Password">
+            <button hx-post="/login">Sign In</button>
+        </div>
+    </div>
+</body>
+</html>
