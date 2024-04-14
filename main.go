@@ -27,6 +27,54 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
+
+	// Create the notes table if it doesn't exist
+	createNotesRequest := `CREATE TABLE IF NOT EXISTS notes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		user_id INTEGER,
+		title TEXT,
+		content TEXT,
+		FOREIGN KEY (user_id) REFERENCES users (id)
+	)`
+	if _, err = db.Exec(createNotesRequest); err != nil {
+		log.Fatal(err)
+	}
+
+	// Insert sample notes for the default user
+	var userId int
+	err = db.QueryRow("SELECT id FROM users WHERE username = ?", "user").Scan(&userId)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	sampleNotes := []struct {
+		title   string
+		content string
+	}{
+		{"Welcome!", "This is your first note."},
+		{"Reminder", "Don't forget to update your notes regularly."},
+		{"Important", "Remember to backup your notes."},
+		{"Ideas", "Brainstorm some new ideas for your project."},
+		{"Meeting", "Prepare agenda for the upcoming meeting."},
+	}
+
+	// Check if the notes table is empty for the "user" user
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM notes WHERE user_id = ?", userId).Scan(&count)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if count == 0 {
+		// Insert sample notes only if the notes table is empty for the user
+		for _, note := range sampleNotes {
+			_, err = db.Exec("INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)", userId, note.title, note.content)
+			if err != nil {
+				log.Fatal(err)
+			}
+	}
+	}
 
 	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("."))))
