@@ -148,7 +148,6 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 			notes = append(notes, note)
 		}
 
-		// Send the notes as a response
 		w.Header().Set("HX-Trigger", "loginSuccess")
 		w.Header().Set("Content-Type", "text/html")
 		var noteHTML string
@@ -163,7 +162,13 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		w.Write([]byte(fmt.Sprintf(`
             <div class="column is-half" id="content">
                 <h1 id="pageTitle" class="title">Notes</h1>
-                %s
+                <div id="notesContainer" style="max-height: calc(100vh - 200px); overflow-y: auto;">
+                    %s
+                </div>
+            <div class="field" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px;">
+                <div class="control">
+                    <input class="input" type="text" placeholder="Enter a new note...">
+                </div>
             </div>
         `, noteHTML)))
 	}
