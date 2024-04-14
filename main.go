@@ -2,53 +2,50 @@ package main
 
 import (
 	"database/sql"
-	"html/template"
+	"fmt"
+	"log"
 	"net/http"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sql.DB
-
 func main() {
 	// Open the SQLite database
-	var err error
-	db, err = sql.Open("sqlite3", "users.db")
+	db, err := sql.Open("sqlite3", "users.db")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer db.Close()
 
-	// Create the users table if it doesn't exist
-	createUserTable := `CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT
-    )`
-	if _, err = db.Exec(createUserTable); err != nil {
-		panic(err)
+	createUserRequest := `CREATE TABLE IF NOT EXISTS users ( id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE, password TEXT)`
+	if _, err = db.Exec(createUserRequest); err != nil {
+		log.Fatal(err)
 	}
 
-	addUser := `INSERT OR IGNORE INTO users (username, password) VALUES ("user", "pass")`
-	if _, err = db.Exec(addUser); err != nil {
-		panic(err)
+	// Insert the default user if it doesn't exist
+	_, err = db.Exec(`INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)`, "user", "pass")
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	http.HandleFunc("/", handleIndex)
-	http.HandleFunc("/login", handleLogin)
-	http.HandleFunc("/success", handleSuccess)
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	// Serve static files
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("."))))
 
+	// Serve the index.html file
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "index.html")
+	})
+
+	// Handle login request
+	http.HandleFunc("/login", loginHandler(db))
+
+	// Start the server
+	fmt.Println("Server is running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
 
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("index.html"))
-	tmpl.Execute(w, nil)
-}
-
-func handleLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
+func loginHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
@@ -56,24 +53,52 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
 		var count int
 		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ? AND password = ?", username, password).Scan(&count)
 		if err != nil {
+			log.Println(err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		var tmpl *template.Template
 		if count > 0 {
-			tmpl = template.Must(template.ParseFiles("success.html"))
+			// User exists, send success response
+			w.Header().Set("HX-Trigger", "loginSuccess")
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`
+                <div class="column is-half" id="content">
+                    <h1 id="pageTitle" class="title">Notes</h1>
+                    <p class="has-text-success">Login successful!</p>
+                </div>
+            `))
 		} else {
-			tmpl = template.Must(template.ParseFiles("error.html"))
+			// User doesn't exist, send error response
+			w.Header().Set("HX-Trigger", "loginError")
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`
+                <div class="column is-half" id="content">
+                    <h1 id="pageTitle" class="title">Login</h1>
+					<p class="has-text-danger">Invalid username or password.</p>
+                    <div id="loginForm">
+                        <form hx-post="/login" hx-target="#content" hx-swap="outerHTML">
+                            <div class="field">
+                                <label class="label">Username</label>
+                                <div class="control">
+                                    <input class="input" type="text" name="username" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="label">Password</label>
+                                <div class="control">
+                                    <input class="input" type="password" name="password" required>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <div class="control">
+                                    <button class="button is-primary" type="submit">Login</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `))
 		}
-
-		tmpl.Execute(w, nil)
-	} else {
-	handleIndex(w, r)
 	}
-}
-
-func handleSuccess(w http.ResponseWriter, r *http.Request) {
-	tmpl := template.Must(template.ParseFiles("success.html"))
-	tmpl.Execute(w, nil)
 }
