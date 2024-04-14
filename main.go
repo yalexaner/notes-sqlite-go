@@ -11,7 +11,7 @@ import (
 
 func main() {
 	// Open the SQLite database
-	db, err := sql.Open("sqlite3", "users.db")
+	db, err := sql.Open("sqlite3", "notes.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
-	}
+		}
 	}
 
 	// Serve static files
@@ -98,55 +98,73 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		password := r.FormValue("password")
 
 		// Check if the user exists in the database
-		var count int
-		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ? AND password = ?", username, password).Scan(&count)
+		var userId int
+		err := db.QueryRow("SELECT id FROM users WHERE username = ? AND password = ?", username, password).Scan(&userId)
 		if err != nil {
+			if err == sql.ErrNoRows {
+				// User doesn't exist, send error response
+				w.Header().Set("HX-Trigger", "loginError")
+				w.Header().Set("Content-Type", "text/html")
+				w.Write([]byte(`
+                    <div class="column is-half" id="content">
+                        <h1 id="pageTitle" class="title">Login</h1>
+                        <p class="has-text-danger">Invalid username or password.</p>
+                        <div id="loginForm">
+                            <!-- Login form HTML -->
+                        </div>
+                    </div>
+                `))
+				return
+			}
 			log.Println(err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		if count > 0 {
-			// User exists, send success response
-			w.Header().Set("HX-Trigger", "loginSuccess")
-			w.Header().Set("Content-Type", "text/html")
-			w.Write([]byte(`
-                <div class="column is-half" id="content">
-                    <h1 id="pageTitle" class="title">Notes</h1>
-                    <p class="has-text-success">Login successful!</p>
-                </div>
-            `))
-		} else {
-			// User doesn't exist, send error response
-			w.Header().Set("HX-Trigger", "loginError")
-			w.Header().Set("Content-Type", "text/html")
-			w.Write([]byte(`
-                <div class="column is-half" id="content">
-                    <h1 id="pageTitle" class="title">Login</h1>
-					<p class="has-text-danger">Invalid username or password.</p>
-                    <div id="loginForm">
-                        <form hx-post="/login" hx-target="#content" hx-swap="outerHTML">
-                            <div class="field">
-                                <label class="label">Username</label>
-                                <div class="control">
-                                    <input class="input" type="text" name="username" required>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <label class="label">Password</label>
-                                <div class="control">
-                                    <input class="input" type="password" name="password" required>
-                                </div>
-                            </div>
-                            <div class="field">
-                                <div class="control">
-                                    <button class="button is-primary" type="submit">Login</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            `))
+		// User exists, retrieve all notes for the user
+		rows, err := db.Query("SELECT title, content FROM notes WHERE user_id = ?", userId)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
 		}
+		defer rows.Close()
+
+		var notes []struct {
+			Title   string
+			Content string
+		}
+
+		for rows.Next() {
+			var note struct {
+				Title   string
+				Content string
+			}
+			if err := rows.Scan(&note.Title, &note.Content); err != nil {
+				log.Println(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			notes = append(notes, note)
+		}
+
+		// Send the notes as a response
+		w.Header().Set("HX-Trigger", "loginSuccess")
+		w.Header().Set("Content-Type", "text/html")
+		var noteHTML string
+		for _, note := range notes {
+			noteHTML += fmt.Sprintf(`
+                <div class="box">
+                    <h2 class="subtitle">%s</h2>
+                    <p>%s</p>
+                </div>
+            `, note.Title, note.Content)
+		}
+		w.Write([]byte(fmt.Sprintf(`
+            <div class="column is-half" id="content">
+                <h1 id="pageTitle" class="title">Notes</h1>
+                %s
+            </div>
+        `, noteHTML)))
 	}
 }
