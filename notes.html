@@ -12,7 +12,7 @@
     <div class="hero is-fullheight">
         <div class="hero-body">
             <div class="container">
-                <div class="columns is-centered">
+                <div class="columns">
                     <div class="column is-half">
                         {{range .}}
                         <article class="message">
@@ -26,12 +26,13 @@
                         {{end}}
                     </div>
                 </div>
+
+                <div class="field" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px;">
+                    <div class="control">
+                        <input class="input" type="text" placeholder="Enter a new note...">
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="field" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px;">
-        <div class="control">
-            <input class="input" type="text" placeholder="Enter a new note...">
         </div>
     </div>
 </body>
