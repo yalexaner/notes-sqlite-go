@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.7.0"></script>
+</head>
+
+<body>
+    <div class="hero is-fullheight">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-half">
+                        {{range .}}
+                        <article class="message">
+                            <div class="message-header">
+                                {{.Title}}
+                            </div>
+                            <div class="message-body">
+                                {{.Content}}
+                            </div>
+                        </article>
+                        {{end}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="field" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px;">
+        <div class="control">
+            <input class="input" type="text" placeholder="Enter a new note...">
+        </div>
+    </div>
+</body>
+
+</html>
