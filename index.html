@@ -1,47 +1,52 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Login</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://unpkg.com/htmx.org@1.7.0"></script>
 </head>
+
 <body>
-    <section class="section">
-        <div class="container">
-            <div class="columns is-centered">
-                <div class="column is-half" id="content">
-                    <h1 id="pageTitle" class="title">Страница логина</h1>
-                <div id="loginForm">
-                    <form hx-post="/login" hx-target="#content" hx-swap="outerHTML">
-                        <div class="field">
-                            <label class="label">Имя пользователя</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="text" name="username" required>
-                                <span class="icon is-small is-left">
-                                    <i class="fas fa-user"></i>
-                                </span>
-                            </div>
+    <div class="hero is-fullheight">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-centered">
+                    <div class="column is-half">
+                        <div id="loginForm">
+                            <form>
+                                <div class="field">
+                                    <label class="label">Имя пользователя</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="text" name="username" required>
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-user"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Пароль</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="password" name="password" required>
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-lock"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="field is-grouped is-grouped-right">
+                                    <div class="control">
+                                        <button hx-post="/login" hx-target="#loginForm" hx-swap="outerHTML"
+                                            class="button is-primary" type="submit">Залогиниться</button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
-                        <div class="field">
-                            <label class="label">Пароль</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="password" name="password" required>
-                                <span class="icon is-small is-left">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="field is-grouped is-grouped-right">
-                            <div class="control">
-                                <button class="button is-primary" type="submit">Залогиниться</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+    </div>
 </body>
+
 </html>
