@@ -106,12 +106,36 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 				w.Header().Set("HX-Trigger", "loginError")
 				w.Header().Set("Content-Type", "text/html")
 				w.Write([]byte(`
-                    <div class="column is-half" id="content">
-                        <h1 id="pageTitle" class="title">Login</h1>
-                        <p class="has-text-danger">Invalid username or password.</p>
                         <div id="loginForm">
-                            <!-- Login form HTML -->
+						<div class="notification is-danger is-light">
+							<p>Введённые логин или пароль неверные</p>
+						</div>
+						<form>
+							<div class="field">
+								<label class="label">Имя пользователя</label>
+								<div class="control has-icons-left">
+									<input class="input" type="text" name="username" required>
+									<span class="icon is-small is-left">
+										<i class="fas fa-user"></i>
+									</span>
                         </div>
+							</div>
+							<div class="field">
+								<label class="label">Пароль</label>
+								<div class="control has-icons-left">
+									<input class="input" type="password" name="password" required>
+									<span class="icon is-small is-left">
+										<i class="fas fa-lock"></i>
+									</span>
+								</div>
+							</div>
+							<div class="field is-grouped is-grouped-right">
+								<div class="control">
+									<button hx-post="/login" hx-target="#loginForm" hx-swap="outerHTML"
+										class="button is-primary" type="submit">Залогиниться</button>
+								</div>
+							</div>
+						</form>
                     </div>
                 `))
 				return
