@@ -3,11 +3,14 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+var userId int
 
 func main() {
 	// Open the SQLite database
@@ -87,6 +90,8 @@ func main() {
 	// Handle login request
 	http.HandleFunc("/login", loginHandler(db))
 
+	http.HandleFunc("/notes", notesHandler(db))
+
 	// Start the server
 	fmt.Println("Server is running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
@@ -98,7 +103,6 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		password := r.FormValue("password")
 
 		// Check if the user exists in the database
-		var userId int
 		err := db.QueryRow("SELECT id FROM users WHERE username = ? AND password = ?", username, password).Scan(&userId)
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -106,7 +110,7 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 				w.Header().Set("HX-Trigger", "loginError")
 				w.Header().Set("Content-Type", "text/html")
 				w.Write([]byte(`
-                        <div id="loginForm">
+					<div id="loginForm">
 						<div class="notification is-danger is-light">
 							<p>Введённые логин или пароль неверные</p>
 						</div>
@@ -118,7 +122,7 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 									<span class="icon is-small is-left">
 										<i class="fas fa-user"></i>
 									</span>
-                        </div>
+								</div>
 							</div>
 							<div class="field">
 								<label class="label">Пароль</label>
@@ -136,7 +140,7 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 								</div>
 							</div>
 						</form>
-                    </div>
+					</div>
                 `))
 				return
 			}
@@ -145,7 +149,13 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// User exists, retrieve all notes for the user
+		w.Header().Set("HX-Redirect", "/notes") // Use the HX-Redirect header to indicate the redirect URL.
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func notesHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query("SELECT title, content FROM notes WHERE user_id = ?", userId)
 		if err != nil {
 			log.Println(err)
@@ -172,28 +182,16 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 			notes = append(notes, note)
 		}
 
-		w.Header().Set("HX-Trigger", "loginSuccess")
-		w.Header().Set("Content-Type", "text/html")
-		var noteHTML string
-		for _, note := range notes {
-			noteHTML += fmt.Sprintf(`
-                <div class="box">
-                    <h2 class="subtitle">%s</h2>
-                    <p>%s</p>
-                </div>
-            `, note.Title, note.Content)
+		tmpl, err := template.ParseFiles("notes.html")
+		if err != nil {
+			log.Fatal("Error loading template: ", err)
 		}
-		w.Write([]byte(fmt.Sprintf(`
-            <div class="column is-half" id="content">
-                <h1 id="pageTitle" class="title">Notes</h1>
-                <div id="notesContainer" style="max-height: calc(100vh - 200px); overflow-y: auto;">
-                    %s
-                </div>
-            <div class="field" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px;">
-                <div class="control">
-                    <input class="input" type="text" placeholder="Enter a new note...">
-                </div>
-            </div>
-        `, noteHTML)))
+
+		// Execute the template with the notes data
+		w.Header().Set("Content-Type", "text/html")
+		if err := tmpl.Execute(w, notes); err != nil {
+			log.Println("Error executing template: ", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 	}
 }
