@@ -9,11 +9,37 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-calendar@6.0.9/dist/css/bulma-calendar.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bulma-calendar@6.0.9/dist/js/bulma-calendar.min.js"></script>
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .columns {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-grow: 1;
+        }
+
+        .scrollable-column {
+            overflow-y: auto;
+            /* Enables vertical scrolling */
+            max-height: 100%;
+            /* Ensures the column does not grow beyond the viewport */
+        }
+    </style>
 </head>
 
 <body>
     <div class="columns">
-        <div class="column is-half ml-6 mt-6">
+        <div class="column is-half ml-6 mt-6 scrollable-column">
             {{range .}}
             <article class="message">
                 <div class="message-header">
