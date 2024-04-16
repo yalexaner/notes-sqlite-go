@@ -99,6 +99,18 @@
                 lang: 'en-US',
                 type: 'date'
             });
+
+            var scrollableColumn = document.querySelector('.scrollable-column');
+            if (scrollableColumn) {
+                scrollableColumn.scrollTop = scrollableColumn.scrollHeight;
+            }
+        });
+
+        document.body.addEventListener('htmx:load', function (evt) {
+            var scrollableColumn = document.querySelector('.scrollable-column');
+            if (scrollableColumn) {
+                scrollableColumn.scrollTop = scrollableColumn.scrollHeight;
+            }
         });
     </script>
 </body>
