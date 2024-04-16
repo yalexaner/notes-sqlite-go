@@ -50,6 +50,17 @@
                 </div>
             </article>
             {{end}}
+            <div id="add-note" class="field has-addons">
+                <div class="control is-expanded">
+                    <input class="input" type="text" name="noteContent" placeholder="Новая заметка">
+                </div>
+                <div class="control">
+                    <button class="button is-info" hx-post="/add-note" hx-target="#add-note" hx-swap="beforebegin"
+                        hx-include="[name='noteContent']">
+                        Отправить
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="column is-one-third is-offset-1 mr-6 mt-6">
             <!-- <h3 class="title is-3">Фильтры к заметкам</h3> -->
