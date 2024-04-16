@@ -1,40 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html style="background-color: aquamarine;">
 
 <head>
-    <title>Login</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-    <link rel="stylesheet" href="/static/style.css">
-    <script src="https://unpkg.com/htmx.org@1.7.0"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notes</title>
+    <script src="https://unpkg.com/htmx.org@1.6.0"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma-calendar@6.0.9/dist/css/bulma-calendar.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bulma-calendar@6.0.9/dist/js/bulma-calendar.min.js"></script>
 </head>
 
 <body>
-    <div class="hero is-fullheight">
-        <div class="hero-body">
-            <div class="container">
-                <div class="columns">
-                    <div class="column is-half">
-                        {{range .}}
-                        <article class="message">
-                            <div class="message-header">
-                                {{.Title}}
-                            </div>
-                            <div class="message-body">
-                                {{.Content}}
-                            </div>
-                        </article>
-                        {{end}}
+    <div class="columns">
+        <div class="column is-half ml-6 mt-6">
+            {{range .}}
+            <article class="message">
+                <div class="message-header">
+                    <p>{{.Title}}</p>
+                </div>
+                <div class="message-body">
+                    {{.Content}}
+                </div>
+            </article>
+            {{end}}
+        </div>
+        <div class="column is-one-third is-offset-1 mr-6 mt-6">
+            <!-- <h3 class="title is-3">Фильтры к заметкам</h3> -->
+            <div class="box">
+                <h5 class="title is-5">Фильтровать по тексту заметок</h5>
+                <div class="field has-addons">
+                    <div class="control is-expanded">
+                        <input class="input" type="text" placeholder="Текст из заметки">
+                    </div>
+                    <div class="control">
+                        <button class="button is-info">
+                            Отфильтровать
+                        </button>
                     </div>
                 </div>
-
-                <div class="field" style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px;">
+            </div>
+            <div class="box">
+                <h5 class="title is-5">Фильтровать по дате создания</h5>
+                <div class="field">
                     <div class="control">
-                        <input class="input" type="text" placeholder="Enter a new note...">
+                        <div id="calendar"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendar = new bulmaCalendar('#calendar', {
+                showTodayButton: false,
+                showClearButton: false,
+                displayMode: 'inline',
+                startDate: new Date(),
+                dateFormat: 'MM/DD/YYYY',
+                lang: 'en-US',
+                type: 'date'
+            });
+        });
+    </script>
 </body>
 
 </html>
