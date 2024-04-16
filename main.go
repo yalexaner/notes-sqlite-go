@@ -10,7 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var userId int
+var userId = -1
 
 func main() {
 	// Open the SQLite database
@@ -167,6 +167,11 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 
 func notesHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if userId == -1 {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
 		rows, err := db.Query("SELECT title, content FROM notes WHERE user_id = ?", userId)
 		if err != nil {
 			log.Println(err)
