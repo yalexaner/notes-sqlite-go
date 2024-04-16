@@ -51,6 +51,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	longMessage := `Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+                    <strong>Pellentesque risus mi</strong>, tempus quis placerat ut, porta nec
+                    nulla. Vestibulum rhoncus ac ex sit amet fringilla. Nullam gravida purus
+                    diam, et dictum <a>felis venenatis</a> efficitur. Aenean ac
+                    <em>eleifend lacus</em>, in mollis lectus. Donec sodales, arcu et
+                    sollicitudin porttitor, tortor urna tempor ligula, id porttitor mi magna a
+                    neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem.
+                	neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem.`
+
 	sampleNotes := []struct {
 		title   string
 		content string
@@ -60,6 +69,7 @@ func main() {
 		{"Important", "Remember to backup your notes."},
 		{"Ideas", "Brainstorm some new ideas for your project."},
 		{"Meeting", "Prepare agenda for the upcoming meeting."},
+		{"Hello World", longMessage},
 	}
 
 	// Check if the notes table is empty for the "user" user
@@ -91,6 +101,7 @@ func main() {
 	http.HandleFunc("/login", loginHandler(db))
 
 	http.HandleFunc("/notes", notesHandler(db))
+	http.HandleFunc("/add-note", addNoteHandler(db))
 
 	// Start the server
 	fmt.Println("Server is running on http://localhost:8080")
@@ -193,5 +204,35 @@ func notesHandler(db *sql.DB) http.HandlerFunc {
 			log.Println("Error executing template: ", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
+	}
+}
+
+func addNoteHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		noteContent := r.FormValue("noteContent")
+		if noteContent == "" {
+			http.Error(w, "Note content is empty", http.StatusBadRequest)
+			return
+		}
+
+		_, err := db.Exec("INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)", userId, "New Note", noteContent)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		// Return the new note in a format that can be directly inserted into the HTML
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(fmt.Sprintf(`
+            <article class="message">
+                <div class="message-header">
+                    New Note
+                </div>
+                <div class="message-body">
+                    %s
+                </div>
+            </article>
+        `, template.HTMLEscapeString(noteContent))))
 	}
 }
