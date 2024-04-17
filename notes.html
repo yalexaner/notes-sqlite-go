@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html style="background-color: aquamarine;">
+<html style="background-image: linear-gradient(to right, #ffcad4, #d1e8ff);">
 
 <head>
     <meta charset="utf-8">
@@ -41,33 +41,14 @@
     <div class="columns">
         <div class="column is-half ml-6 mt-6 scrollable-column">
             {{range .}}
-            <article class="message">
-                <div class="message-header">
-                    <p>{{.Title}}</p>
-                </div>
-                <div class="message-body">
-                    {{.Content}}
-                </div>
-            </article>
+            {{template "note" .}}
             {{end}}
-            <div id="add-note" class="field has-addons">
-                <div class="control is-expanded">
-                    <input class="input" type="text" name="noteContent" placeholder="Новая заметка">
-                </div>
-                <div class="control">
-                    <button class="button is-info" hx-post="/add-note" hx-target="#add-note" hx-swap="beforebegin"
-                        hx-include="[name='noteContent']">
-                        Отправить
-                    </button>
-                </div>
-            </div>
         </div>
         <div class="column is-one-third is-offset-1 mr-6 mt-6">
             <div class="box">
-                <h5 class="title is-5">Фильтровать по тексту заметок</h5>
                 <div class="field has-addons">
                     <div class="control is-expanded">
-                        <input name="filter-text" class="input" type="text" placeholder="Текст из заметки">
+                        <input name="filter-text" class="input" type="text" placeholder="Ключевые слова">
                     </div>
                     <div class="control">
                         <button class="button is-info" hx-post="/filter-notes" hx-target=".scrollable-column"
@@ -78,12 +59,33 @@
                 </div>
             </div>
             <div class="box">
-                <h5 class="title is-5">Фильтровать по дате создания</h5>
                 <div class="field">
                     <div class="control">
                         <div id="calendar"></div>
                     </div>
                 </div>
+            </div>
+            <div class="box">
+                <form>
+                    <div class="field">
+                        <div class="control">
+                            <input class="input is-medium" type="text" name="title" placeholder="Заголовок заметки"
+                                required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <input class="input is-medium" type="text" name="content" placeholder="Текст заметки"
+                                required>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <button hx-post="/add-note" hx-target=".scrollable-column" hx-swap="beforeend"
+                            class="button is-primary is-medium is-fullwidth" type="submit">
+                            Добавить новую заметку
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -93,6 +95,8 @@
             var calendar = new bulmaCalendar('#calendar', {
                 showTodayButton: false,
                 showClearButton: false,
+                showHeader: false,
+                showFooter: false,
                 displayMode: 'inline',
                 startDate: new Date(),
                 dateFormat: 'MM/DD/YYYY',

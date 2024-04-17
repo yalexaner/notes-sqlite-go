@@ -258,46 +258,34 @@ func notesHandler(db *sql.DB) http.HandlerFunc {
 			notes = append(notes, note)
 		}
 
-		tmpl, err := template.ParseFiles("notes.html")
-		if err != nil {
-			log.Fatal("Error loading template: ", err)
-		}
-
-		// Execute the template with the notes data
-		w.Header().Set("Content-Type", "text/html")
-		if err := tmpl.Execute(w, notes); err != nil {
-			log.Println("Error executing template: ", err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		}
+		tmpl := template.Must(template.ParseFiles("notes.html", "template/note.html"))
+		tmpl.ExecuteTemplate(w, "notes.html", notes)
 	}
 }
 
 func addNoteHandler(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		noteContent := r.FormValue("noteContent")
-		if noteContent == "" {
-			http.Error(w, "Note content is empty", http.StatusBadRequest)
+		title := r.FormValue("title")
+		content := r.FormValue("content")
+
+		if title == "" || content == "" {
+			http.Error(w, "Note title or content is empty", http.StatusBadRequest)
 			return
 		}
 
-		_, err := db.Exec("INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)", userId, "New Note", noteContent)
+		_, err := db.Exec("INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)", userId, title, content)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		// Return the new note in a format that can be directly inserted into the HTML
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(fmt.Sprintf(`
-            <article class="message">
-                <div class="message-header">
-                    New Note
-                </div>
-                <div class="message-body">
-                    %s
-                </div>
-            </article>
-        `, template.HTMLEscapeString(noteContent))))
+		note := Note{
+			Title:   title,
+			Content: content,
+		}
+
+		tmpl := template.Must(template.ParseFiles("template/note.html"))
+		tmpl.ExecuteTemplate(w, "note", note)
 	}
 }
