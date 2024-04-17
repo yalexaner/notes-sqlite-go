@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -17,8 +18,9 @@ type LoginError struct {
 }
 
 type Note struct {
-	Title   string
-	Content string
+	Title     string
+	Content   string
+	CreatedAt string
 }
 
 var userId = -1
@@ -49,6 +51,7 @@ func main() {
 		user_id INTEGER,
 		title TEXT,
 		content TEXT,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (user_id) REFERENCES users (id)
 	)`
 	if _, err = db.Exec(createNotesRequest); err != nil {
@@ -71,7 +74,10 @@ func main() {
                     neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem.
                 	neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem.`
 
-	sampleNotes := []Note{
+	sampleNotes := []struct {
+		Title   string
+		Content string
+	}{
 		{"Welcome!", "This is your first note."},
 		{"Reminder", "Don't forget to update your notes regularly."},
 		{"Important", "Remember to backup your notes."},
@@ -238,7 +244,7 @@ func notesHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		rows, err := db.Query("SELECT title, content FROM notes WHERE user_id = ?", userId)
+		rows, err := db.Query("SELECT title, content, created_at FROM notes WHERE user_id = ?", userId)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -250,11 +256,20 @@ func notesHandler(db *sql.DB) http.HandlerFunc {
 
 		for rows.Next() {
 			var note Note
-			if err := rows.Scan(&note.Title, &note.Content); err != nil {
+			if err := rows.Scan(&note.Title, &note.Content, &note.CreatedAt); err != nil {
 				log.Println(err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
+
+			timeDate, err := time.Parse("2006-01-02T15:04:05Z", note.CreatedAt)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			note.CreatedAt = timeDate.Format("2 January 2006")
 			notes = append(notes, note)
 		}
 
@@ -273,7 +288,7 @@ func addNoteHandler(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		_, err := db.Exec("INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)", userId, title, content)
+		_, err := db.Exec("INSERT INTO notes (user_id, title, content, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)", userId, title, content)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -281,8 +296,9 @@ func addNoteHandler(db *sql.DB) http.HandlerFunc {
 		}
 
 		note := Note{
-			Title:   title,
-			Content: content,
+			Title:     title,
+			Content:   content,
+			CreatedAt: time.Now().Format("2 January 2006"),
 		}
 
 		tmpl := template.Must(template.ParseFiles("template/note.html"))
