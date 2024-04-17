@@ -12,6 +12,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type LoginError struct {
+	Message string
+}
+
 var userId = -1
 
 func main() {
@@ -96,7 +100,8 @@ func main() {
 
 	// Serve the index.html file
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "index.html")
+		tmpl := template.Must(template.ParseFiles("index.html", "template/login-form.html"))
+		tmpl.ExecuteTemplate(w, "index.html", nil)
 	})
 
 	// Handle login request
@@ -165,44 +170,14 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		err := db.QueryRow("SELECT id FROM users WHERE username = ? AND password = ?", username, password).Scan(&userId)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				// User doesn't exist, send error response
-				w.Header().Set("HX-Trigger", "loginError")
-				w.Header().Set("Content-Type", "text/html")
-				w.Write([]byte(`
-					<div id="loginForm">
-						<div class="notification is-danger is-light">
-							<p>Введённые логин или пароль неверные</p>
-						</div>
-						<form>
-							<div class="field">
-								<label class="label">Имя пользователя</label>
-								<div class="control has-icons-left">
-									<input class="input" type="text" name="username" required>
-									<span class="icon is-small is-left">
-										<i class="fas fa-user"></i>
-									</span>
-								</div>
-							</div>
-							<div class="field">
-								<label class="label">Пароль</label>
-								<div class="control has-icons-left">
-									<input class="input" type="password" name="password" required>
-									<span class="icon is-small is-left">
-										<i class="fas fa-lock"></i>
-									</span>
-								</div>
-							</div>
-							<div class="field is-grouped is-grouped-right">
-								<div class="control">
-									<button hx-post="/login" hx-target="#loginForm" hx-swap="outerHTML"
-										class="button is-primary" type="submit">Залогиниться</button>
-								</div>
-							</div>
-						</form>
-					</div>
-                `))
+				loginError := LoginError{
+					Message: "Пользователь с ведёнными логином или парелём не найден",
+				}
+				tmpl := template.Must(template.ParseFiles("template/login-form.html"))
+				tmpl.ExecuteTemplate(w, "loginForm", loginError)
 				return
 			}
+
 			log.Println(err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 			return
