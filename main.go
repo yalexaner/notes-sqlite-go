@@ -3,11 +3,9 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"html"
 	"html/template"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
@@ -120,12 +118,15 @@ func main() {
 	http.HandleFunc("/add-note", addNoteHandler(db))
 
 	http.HandleFunc("/filter-notes", func(w http.ResponseWriter, r *http.Request) {
+		if userId == -1 {
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
+
 		filterText := r.FormValue("filter-text")
 
-		// Query the database for notes matching the filterText in their title or content
-		// This is a simplified example; you'll need to use parameterized queries to prevent SQL injection
-		query := `SELECT title, content FROM notes WHERE title LIKE ? OR content LIKE ?`
-		rows, err := db.Query(query, "%"+filterText+"%", "%"+filterText+"%")
+		query := `SELECT title, content, created_at FROM notes WHERE (title LIKE ? OR content LIKE ?) AND user_id = ?`
+		rows, err := db.Query(query, "%"+filterText+"%", "%"+filterText+"%", userId)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -133,36 +134,29 @@ func main() {
 		}
 		defer rows.Close()
 
-		// Construct HTML response
-		var responseHTML strings.Builder
-		responseHTML.WriteString("<div class='column is-half ml-6 mt-6 scrollable-column'>")
+		var notes []Note
+
 		for rows.Next() {
-			var title, content string
-			if err := rows.Scan(&title, &content); err != nil {
+			var note Note
+			if err := rows.Scan(&note.Title, &note.Content, &note.CreatedAt); err != nil {
 				log.Println(err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
-			responseHTML.WriteString(fmt.Sprintf("<article class='message'><div class='message-header'><p>%s</p></div><div class='message-body'>%s</div></article>", html.EscapeString(title), html.EscapeString(content)))
+
+			timeDate, err := time.Parse("2006-01-02T15:04:05Z", note.CreatedAt)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+
+			note.CreatedAt = timeDate.Format("2 January 2006")
+			notes = append(notes, note)
 		}
 
-		responseHTML.WriteString(`
-		<div id="add-note" class="field has-addons">
-			<div class="control is-expanded">
-				<input class="input" type="text" name="noteContent" placeholder="Новая заметка">
-			</div>
-			<div class="control">
-				<button class="button is-info" hx-post="/add-note" hx-target="#add-note" hx-swap="beforebegin"
-					hx-include="[name='noteContent']">
-					Отправить
-				</button>
-			</div>
-		</div>
-		`)
-
-		// Send the constructed HTML as the response
-		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte(responseHTML.String()))
+		tmpl := template.Must(template.ParseFiles("template/notes-list.html", "template/note.html"))
+		tmpl.ExecuteTemplate(w, "notesList", notes)
 	})
 
 	// Start the server
@@ -273,7 +267,7 @@ func notesHandler(db *sql.DB) http.HandlerFunc {
 			notes = append(notes, note)
 		}
 
-		tmpl := template.Must(template.ParseFiles("notes.html", "template/note.html"))
+		tmpl := template.Must(template.ParseFiles("notes.html", "template/notes-list.html", "template/note.html"))
 		tmpl.ExecuteTemplate(w, "notes.html", notes)
 	}
 }

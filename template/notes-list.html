@@ -1,0 +1,7 @@
+{{define "notesList"}}
+<div class="column is-half ml-6 mt-6 scrollable-column">
+    {{range .}}
+    {{template "note" .}}
+    {{end}}
+</div>
+{{end}}

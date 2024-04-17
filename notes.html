@@ -39,11 +39,7 @@
 
 <body>
     <div class="columns">
-        <div class="column is-half ml-6 mt-6 scrollable-column">
-            {{range .}}
-            {{template "note" .}}
-            {{end}}
-        </div>
+        {{template "notesList" .}}
         <div class="column is-one-third is-offset-1 mr-6 mt-6">
             <div class="box">
                 <div class="field has-addons">
