@@ -106,7 +106,7 @@ func main() {
 
 	// Serve the index.html file
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		tmpl := template.Must(template.ParseFiles("index.html", "template/login-form.html"))
+		tmpl := template.Must(template.ParseFiles("template/index.html", "template/login-form.html"))
 		tmpl.ExecuteTemplate(w, "index.html", nil)
 	})
 
@@ -267,7 +267,7 @@ func notesHandler(db *sql.DB) http.HandlerFunc {
 			notes = append(notes, note)
 		}
 
-		tmpl := template.Must(template.ParseFiles("notes.html", "template/notes-list.html", "template/note.html"))
+		tmpl := template.Must(template.ParseFiles("template/notes.html", "template/notes-list.html", "template/note.html"))
 		tmpl.ExecuteTemplate(w, "notes.html", notes)
 	}
 }
