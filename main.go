@@ -16,6 +16,11 @@ type LoginError struct {
 	Message string
 }
 
+type Note struct {
+	Title   string
+	Content string
+}
+
 var userId = -1
 
 func main() {
@@ -66,10 +71,7 @@ func main() {
                     neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem.
                 	neque. Donec dui urna, vehicula et sem eget, facilisis sodales sem.`
 
-	sampleNotes := []struct {
-		title   string
-		content string
-	}{
+	sampleNotes := []Note{
 		{"Welcome!", "This is your first note."},
 		{"Reminder", "Don't forget to update your notes regularly."},
 		{"Important", "Remember to backup your notes."},
@@ -88,7 +90,7 @@ func main() {
 	if count == 0 {
 		// Insert sample notes only if the notes table is empty for the user
 		for _, note := range sampleNotes {
-			_, err = db.Exec("INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)", userId, note.title, note.content)
+			_, err = db.Exec("INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)", userId, note.Title, note.Content)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -251,16 +253,10 @@ func notesHandler(db *sql.DB) http.HandlerFunc {
 		}
 		defer rows.Close()
 
-		var notes []struct {
-			Title   string
-			Content string
-		}
+		var notes []Note
 
 		for rows.Next() {
-			var note struct {
-				Title   string
-				Content string
-			}
+			var note Note
 			if err := rows.Scan(&note.Title, &note.Content); err != nil {
 				log.Println(err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
