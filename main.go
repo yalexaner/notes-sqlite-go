@@ -169,20 +169,13 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		username := r.FormValue("username")
 		password := r.FormValue("password")
 
-		// Check if the user exists in the database
 		err := db.QueryRow("SELECT id FROM users WHERE username = ? AND password = ?", username, password).Scan(&userId)
-		if err != nil {
-			if err == sql.ErrNoRows {
-				loginError := LoginError{
-					Message: "Пользователь с ведёнными логином или парелём не найден",
-				}
-				tmpl := template.Must(template.ParseFiles("template/login-form.html"))
-				tmpl.ExecuteTemplate(w, "loginForm", loginError)
-				return
-			}
-
+		if err != nil && err != sql.ErrNoRows {
+			responseWithLoginError(w, "Произошла ошибка сервера при проверке пользователя, попробуйте позже")
 			log.Println(err)
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		} else if err != nil {
+			responseWithLoginError(w, "Пользователь с ведёнными логином или парелём не найден")
 			return
 		}
 
