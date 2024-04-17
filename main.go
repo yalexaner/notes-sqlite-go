@@ -106,6 +106,7 @@ func main() {
 
 	// Handle login request
 	http.HandleFunc("/login", loginHandler(db))
+	http.HandleFunc("/signup", signupHandler(db))
 
 	http.HandleFunc("/notes", notesHandler(db))
 	http.HandleFunc("/add-note", addNoteHandler(db))
@@ -186,6 +187,53 @@ func loginHandler(db *sql.DB) http.HandlerFunc {
 		w.Header().Set("HX-Redirect", "/notes") // Use the HX-Redirect header to indicate the redirect URL.
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func signupHandler(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		username := r.FormValue("username")
+		password := r.FormValue("password")
+
+		fmt.Println("in signupHandler")
+
+		var count int
+		err := db.QueryRow("SELECT COUNT(*) FROM users WHERE username = ?", username).Scan(&count)
+		if err != nil {
+			responseWithLoginError(w, "Произошла ошибка сервера при проверке пользователя, попробуйте позже")
+			log.Println(err)
+			return
+		}
+
+		fmt.Printf("user count %d", count)
+
+		if count > 0 {
+			responseWithLoginError(w, "Пользователь с таким именем уже существует")
+			return
+		}
+
+		_, err = db.Exec("INSERT INTO users (username, password) VALUES (?, ?)", username, password)
+		if err != nil {
+			responseWithLoginError(w, "Произошла ошибка сервера при проверке пользователя, попробуйте позже")
+			log.Println(err)
+			return
+		}
+
+		err = db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userId)
+		if err != nil {
+			responseWithLoginError(w, "Произошла ошибка сервера при проверке пользователя, попробуйте позже")
+			log.Println(err)
+			return
+		}
+
+		w.Header().Set("HX-Redirect", "/notes")
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func responseWithLoginError(w http.ResponseWriter, errorMessage string) {
+	signupError := LoginError{Message: errorMessage}
+	tmpl := template.Must(template.ParseFiles("template/login-form.html"))
+	tmpl.ExecuteTemplate(w, "loginForm", signupError)
 }
 
 func notesHandler(db *sql.DB) http.HandlerFunc {
