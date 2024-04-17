@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html style="background-image: radial-gradient(circle, #ffcad4, #d1e8ff);">
 
 <head>
     <title>Login</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://unpkg.com/htmx.org@1.7.0"></script>
+    <script src="https://kit.fontawesome.com/97f0aa4495.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -14,33 +15,41 @@
             <div class="container">
                 <div class="columns is-centered">
                     <div class="column is-half">
-                        <div id="loginForm">
-                            <form>
-                                <div class="field">
-                                    <label class="label">Имя пользователя</label>
-                                    <div class="control has-icons-left">
-                                        <input class="input" type="text" name="username" required>
-                                        <span class="icon is-small is-left">
-                                            <i class="fas fa-user"></i>
-                                        </span>
+                        <div class="box" style="box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+                            <div id="loginForm">
+                                <form>
+                                    <div class="field">
+                                        <label class="label" style="font-size: 22px;">Имя пользователя</label>
+                                        <div class="control has-icons-left">
+                                            <input class="input is-medium" type="text" name="username"
+                                                placeholder="Владим Владимыч" required>
+                                            <span class="icon is-small is-left">
+                                                <i class="fas fa-user"></i>
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="field">
-                                    <label class="label">Пароль</label>
-                                    <div class="control has-icons-left">
-                                        <input class="input" type="password" name="password" required>
-                                        <span class="icon is-small is-left">
-                                            <i class="fas fa-lock"></i>
-                                        </span>
+                                    <div class="field">
+                                        <label class="label" style="font-size: 22px;">Пароль</label>
+                                        <div class="control has-icons-left">
+                                            <input class="input is-medium" type="password" name="password"
+                                                placeholder="*********************" required>
+                                            <span class="icon is-small is-left">
+                                                <i class="fas fa-lock"></i>
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="field is-grouped is-grouped-right">
-                                    <div class="control">
-                                        <button hx-post="/login" hx-target="#loginForm" hx-swap="outerHTML"
-                                            class="button is-primary" type="submit">Залогиниться</button>
+                                    <div class="field is-grouped is-grouped-right">
+                                        <div class="control">
+                                            <button hx-post="/singup" hx-target="#loginForm" hx-swap="outerHTML"
+                                                class="button is-text is-medium">Зарегистрироваться</button>
+                                        </div>
+                                        <div class="control">
+                                            <button hx-post="/login" hx-target="#loginForm" hx-swap="outerHTML"
+                                                class="button is-primary is-medium" type="submit">Залогиниться</button>
+                                        </div>
                                     </div>
-                                </div>
-                            </form>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
