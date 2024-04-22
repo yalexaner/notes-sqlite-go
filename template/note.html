@@ -1,11 +1,17 @@
 {{define "note"}}
-<article class="message">
+<article class="message" name="note-id" value="{{.Id}}">
     <div class="message-header">
         <p>{{.Title}}</p>
-        <span class="has-text-grey is-size-7">{{.CreatedAt}}</span>
+        <p class="has-text-grey is-size-7 ml-3">{{.CreatedAt}}</p>
     </div>
     <div class="message-body">
         {{.Content}}
+        <div class="field is-grouped is-grouped-right">
+            <div class="control">
+                <button hx-post="/show-delete-warning" hx-target="#loginForm" hx-swap="outerHTML" hx-include="note-id"
+                    class="button is-danger is-outlined is-small mt-3" type="submit">Удалить заметку</button>
+            </div>
+        </div>
     </div>
 </article>
 {{end}}

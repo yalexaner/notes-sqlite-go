@@ -16,6 +16,7 @@ type LoginError struct {
 }
 
 type Note struct {
+	Id        int
 	Title     string
 	Content   string
 	CreatedAt string
@@ -125,7 +126,7 @@ func main() {
 
 		filterText := r.FormValue("filter-text")
 
-		query := `SELECT title, content, created_at FROM notes WHERE (title LIKE ? OR content LIKE ?) AND user_id = ?`
+		query := `SELECT id, title, content, created_at FROM notes WHERE (title LIKE ? OR content LIKE ?) AND user_id = ?`
 		rows, err := db.Query(query, "%"+filterText+"%", "%"+filterText+"%", userId)
 		if err != nil {
 			log.Println(err)
@@ -138,7 +139,7 @@ func main() {
 
 		for rows.Next() {
 			var note Note
-			if err := rows.Scan(&note.Title, &note.Content, &note.CreatedAt); err != nil {
+			if err := rows.Scan(&note.Id, &note.Title, &note.Content, &note.CreatedAt); err != nil {
 				log.Println(err)
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return

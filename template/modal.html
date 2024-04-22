@@ -1,0 +1,22 @@
+{{define "modal"}}
+{{if .}} <div class="modal is-active"> {{else}} <div class="modal"> {{end}}
+    <div class="modal-background"></div>
+    <div class="modal-content">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title is-centered">Удалить заметку?</p>
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    {{template "note" .}}
+                </div>
+            </div>
+            <footer class="card-footer">
+                <a href="#" class="card-footer-item">Удалить заметку</a>
+                <a href="#" class="card-footer-item">Отменить удаление</a>
+            </footer>
+        </div>
+    </div>
+    <button class="modal-close is-large" aria-label="close"></button>
+</div>
+{{end}}
